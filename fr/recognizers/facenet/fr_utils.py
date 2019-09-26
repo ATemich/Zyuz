@@ -149,15 +149,15 @@ def load_weights_from_FaceNet(FRmodel):
 
     # Set layer weights of the model
     for name in weights:
-        if FRmodel.get_layer(name) != None:
+        if FRmodel.get_layer(name) is not None:
             FRmodel.get_layer(name).set_weights(weights_dict[name])
-        elif model.get_layer(name) != None:
+        elif model.get_layer(name) is not None:
             model.get_layer(name).set_weights(weights_dict[name])
 
 
 def load_weights():
     # Set weights path
-    dirPath = './weights'
+    dirPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'weights')
     fileNames = filter(lambda f: not f.startswith('.'), os.listdir(dirPath))
     paths = {}
     weights_dict = {}

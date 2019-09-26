@@ -1,4 +1,5 @@
-from .FaceFinder import FaceFinder, Face
+from .. import FaceFinder
+from ... import Face
 import cv2
 import numpy
 

@@ -1,5 +1,4 @@
-import numpy
-from typing import List, Union
+from typing import Union
 from collections import namedtuple
 
 Vector = namedtuple('Vector', ['x', 'y'])
@@ -16,11 +15,3 @@ class Face:
             self.size = Vector(*self.size)
         self.dist = dist
         self.end = Vector(self.start.x+self.size.x, self.start.y+self.size.y)
-
-
-class FaceFinder:
-    def __init__(self):
-        pass
-
-    def find(self, pic: numpy.ndarray) -> List[Face]:
-        raise NotImplementedError

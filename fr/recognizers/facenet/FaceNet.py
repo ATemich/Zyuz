@@ -3,7 +3,9 @@ import numpy as np
 import tensorflow as tf
 from .fr_utils import *
 from .inception_blocks_v2 import *
-from recognizers import FaceRecognizer
+from .. import FaceRecognizer
+from keras import backend as K
+K.set_image_data_format('channels_first')
 
 class FaceNet(FaceRecognizer):
     def __init__(self):
@@ -11,7 +13,7 @@ class FaceNet(FaceRecognizer):
         self.database = {}
         self.FRmodel = faceRecoModel(input_shape=(3, 96, 96))
         self.FRmodel.compile(optimizer='adam', loss=self.triplet_loss, metrics=['accuracy'])
-        load_weights_from_FaceNet(FRmodel)
+        load_weights_from_FaceNet(self.FRmodel)
 
     def load_from_images(self, path):
         for file in os.listdir(path):
@@ -19,8 +21,9 @@ class FaceNet(FaceRecognizer):
             identity = os.path.splitext(os.path.basename(file))[0]
             self.database[identity] = img_path_to_encoding(file, self.FRmodel)
 
-    def recognize(self, pic):
-        encoding = img_to_encoding(image, model)
+    def recognize(self, pic, face=None):
+        image = self.cut_out(pic, face)
+        encoding = img_to_encoding(image, self.FRmodel)
 
         min_dist = float('inf')
         identity = None
