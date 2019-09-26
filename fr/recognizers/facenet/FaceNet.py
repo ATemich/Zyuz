@@ -1,7 +1,7 @@
 import os
+import cv2
 import numpy as np
 import tensorflow as tf
-from .fr_utils import load_weights_from_FaceNet, img_to_encoding, img_path_to_encoding
 from .inception_blocks_v2 import faceRecoModel
 from .. import FaceRecognizer
 from keras import backend as K
@@ -11,19 +11,21 @@ class FaceNet(FaceRecognizer):
     def __init__(self):
         super().__init__()
         self.database = {}
-        self.FRmodel = faceRecoModel(input_shape=(3, 96, 96))
-        self.FRmodel.compile(optimizer='adam', loss=self.triplet_loss, metrics=['accuracy'])
-        load_weights_from_FaceNet(self.FRmodel)
+        self.model = faceRecoModel(input_shape=(3, 96, 96))
+        self.model.compile(optimizer='adam', loss=self.triplet_loss, metrics=['accuracy'])
+
+        path = os.path.dirname(os.path.realpath(__file__))
+        self.model.load_weights(os.path.join(path, 'weights.h5'))
 
     def load_from_images(self, path):
         for file in os.listdir(path):
             file = os.path.join(path, file)
             identity = os.path.splitext(os.path.basename(file))[0]
-            self.database[identity] = img_path_to_encoding(file, self.FRmodel)
+            self.database[identity] = self.img_path_to_encoding(file)
 
-    def recognize(self, pic, face=None):
+    def recognize(self, pic, face=None, threshold=0.52):
         image = self.cut_out(pic, face)
-        encoding = img_to_encoding(image, self.FRmodel)
+        encoding = self.img_to_encoding(image)
 
         min_dist = float('inf')
         identity = None
@@ -34,10 +36,22 @@ class FaceNet(FaceRecognizer):
                 min_dist = dist
                 identity = name
 
-        if min_dist > 0.52:
+        if min_dist > threshold:
             return None
         else:
             return str(identity)
+
+    def img_path_to_encoding(self, image_path):
+        img = cv2.imread(image_path, 1)
+        return self.img_to_encoding(img)
+
+    def img_to_encoding(self, image):
+        image = cv2.resize(image, (96, 96))
+        img = image[..., ::-1]
+        img = np.around(np.transpose(img, (2, 0, 1)) / 255.0, decimals=12)
+        x_train = np.array([img])
+        embedding = self.model.predict_on_batch(x_train)
+        return embedding
 
     @staticmethod
     def triplet_loss(y_true, y_pred, alpha=0.3):
