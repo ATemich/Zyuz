@@ -1,8 +1,8 @@
 import os
 import numpy as np
 import tensorflow as tf
-from .fr_utils import *
-from .inception_blocks_v2 import *
+from .fr_utils import load_weights_from_FaceNet, img_to_encoding, img_path_to_encoding
+from .inception_blocks_v2 import faceRecoModel
 from .. import FaceRecognizer
 from keras import backend as K
 K.set_image_data_format('channels_first')

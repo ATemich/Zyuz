@@ -1,75 +1,27 @@
-#### PART OF THIS CODE IS USING CODE FROM VICTOR SY WANG: https://github.com/iwantooxxoox/Keras-OpenFace/blob/master/utils.py ####
+# PART OF THIS CODE IS USING CODE FROM VICTOR SY WANG: https://github.com/iwantooxxoox/Keras-OpenFace/blob/master/utils.py ####
 # THIS FILE IS FROM https://github.com/shahariarrabby/deeplearning.ai/blob/master/COURSE%204%20Convolutional%20Neural%20Networks/Week%2004/Face%20Recognition/fr_utils.py
 
-import tensorflow as tf
 import numpy as np
 import os
 import cv2
-from numpy import genfromtxt
-from keras.layers import Conv2D, ZeroPadding2D, Activation, Input, concatenate
-from keras.models import Model
+from keras.layers import Conv2D, ZeroPadding2D, Activation
 from keras.layers.normalization import BatchNormalization
-from keras.layers.pooling import MaxPooling2D, AveragePooling2D
-import h5py
-import matplotlib.pyplot as plt
 
-
-_FLOATX = 'float32'
-
-
-def variable(value, dtype=_FLOATX, name=None):
-    v = tf.Variable(np.asarray(value, dtype=dtype), name=name)
-    _get_session().run(v.initializer)
-    return v
-
-
-def shape(x):
-    return x.get_shape()
-
-
-def square(x):
-    return tf.square(x)
-
-
-def zeros(shape, dtype=_FLOATX, name=None):
-    return variable(np.zeros(shape), dtype, name)
-
-
-def concatenate(tensors, axis=-1):
-    if axis < 0:
-        axis = axis % len(tensors[0].get_shape())
-    return tf.concat(axis, tensors)
-
-
-def LRN2D(x):
-    return tf.nn.lrn(x, alpha=1e-4, beta=0.75)
-
-
-def conv2d_bn(x,
-              layer=None,
-              cv1_out=None,
-              cv1_filter=(1, 1),
-              cv1_strides=(1, 1),
-              cv2_out=None,
-              cv2_filter=(3, 3),
-              cv2_strides=(1, 1),
-              padding=None):
-    num = '' if cv2_out == None else '1'
+def conv2d_bn(x, layer=None, cv1_out=None, cv1_filter=(1, 1), cv1_strides=(1, 1),
+              cv2_out=None, cv2_filter=(3, 3), cv2_strides=(1, 1), padding=None):
+    num = '' if cv2_out is None else '1'
     tensor = Conv2D(cv1_out, cv1_filter, strides=cv1_strides,
                     data_format='channels_first', name=layer + '_conv' + num)(x)
-    tensor = BatchNormalization(
-        axis=1, epsilon=0.00001, name=layer + '_bn' + num)(tensor)
+    tensor = BatchNormalization(axis=1, epsilon=0.00001, name=layer + '_bn' + num)(tensor)
     tensor = Activation('relu')(tensor)
-    if padding == None:
+    if padding is None:
         return tensor
-    tensor = ZeroPadding2D(
-        padding=padding, data_format='channels_first')(tensor)
-    if cv2_out == None:
+    tensor = ZeroPadding2D(padding=padding, data_format='channels_first')(tensor)
+    if cv2_out is None:
         return tensor
     tensor = Conv2D(cv2_out, cv2_filter, strides=cv2_strides,
                     data_format='channels_first', name=layer + '_conv' + '2')(tensor)
-    tensor = BatchNormalization(
-        axis=1, epsilon=0.00001, name=layer + '_bn' + '2')(tensor)
+    tensor = BatchNormalization(axis=1, epsilon=0.00001, name=layer + '_bn' + '2')(tensor)
     tensor = Activation('relu')(tensor)
     return tensor
 
@@ -143,78 +95,11 @@ conv_shape = {
 
 
 def load_weights_from_FaceNet(FRmodel):
-    # Load weights from csv files (which was exported from Openface torch model)
-    weights = WEIGHTS
-    weights_dict = load_weights()
-
-    # Set layer weights of the model
-    for name in weights:
-        if FRmodel.get_layer(name) is not None:
-            FRmodel.get_layer(name).set_weights(weights_dict[name])
-        elif model.get_layer(name) is not None:
-            model.get_layer(name).set_weights(weights_dict[name])
-
-
-def load_weights():
-    # Set weights path
-    dirPath = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'weights')
-    fileNames = filter(lambda f: not f.startswith('.'), os.listdir(dirPath))
-    paths = {}
-    weights_dict = {}
-
-    for n in fileNames:
-        paths[n.replace('.csv', '')] = dirPath + '/' + n
-
-    for name in WEIGHTS:
-        if 'conv' in name:
-            conv_w = genfromtxt(paths[name + '_w'], delimiter=',', dtype=None)
-            conv_w = np.reshape(conv_w, conv_shape[name])
-            conv_w = np.transpose(conv_w, (2, 3, 1, 0))
-            conv_b = genfromtxt(paths[name + '_b'], delimiter=',', dtype=None)
-            weights_dict[name] = [conv_w, conv_b]
-        elif 'bn' in name:
-            bn_w = genfromtxt(paths[name + '_w'], delimiter=',', dtype=None)
-            bn_b = genfromtxt(paths[name + '_b'], delimiter=',', dtype=None)
-            bn_m = genfromtxt(paths[name + '_m'], delimiter=',', dtype=None)
-            bn_v = genfromtxt(paths[name + '_v'], delimiter=',', dtype=None)
-            weights_dict[name] = [bn_w, bn_b, bn_m, bn_v]
-        elif 'dense' in name:
-            dense_w = genfromtxt(dirPath + '/dense_w.csv',
-                                 delimiter=',', dtype=None)
-            dense_w = np.reshape(dense_w, (128, 736))
-            dense_w = np.transpose(dense_w, (1, 0))
-            dense_b = genfromtxt(dirPath + '/dense_b.csv',
-                                 delimiter=',', dtype=None)
-            weights_dict[name] = [dense_w, dense_b]
-
-    return weights_dict
-
-
-def load_dataset():
-    train_dataset = h5py.File('datasets/train_happy.h5', "r")
-    # your train set features
-    train_set_x_orig = np.array(train_dataset["train_set_x"][:])
-    train_set_y_orig = np.array(
-        train_dataset["train_set_y"][:])  # your train set labels
-
-    test_dataset = h5py.File('datasets/test_happy.h5', "r")
-    # your test set features
-    test_set_x_orig = np.array(test_dataset["test_set_x"][:])
-    test_set_y_orig = np.array(
-        test_dataset["test_set_y"][:])  # your test set labels
-
-    classes = np.array(test_dataset["list_classes"][:])  # the list of classes
-
-    train_set_y_orig = train_set_y_orig.reshape((1, train_set_y_orig.shape[0]))
-    test_set_y_orig = test_set_y_orig.reshape((1, test_set_y_orig.shape[0]))
-
-    return train_set_x_orig, train_set_y_orig, test_set_x_orig, test_set_y_orig, classes
-
+    FRmodel.load_weights(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'weights.h5'))
 
 def img_path_to_encoding(image_path, model):
     img1 = cv2.imread(image_path, 1)
     return img_to_encoding(img1, model)
-
 
 def img_to_encoding(image, model):
     image = cv2.resize(image, (96, 96))
