@@ -23,8 +23,8 @@ class FaceNet(FaceRecognizer):
             identity = os.path.splitext(os.path.basename(file))[0]
             self.database[identity] = self.img_path_to_encoding(file)
 
-    def recognize(self, pic, face=None, threshold=0.52):
-        image = self.cut_out(pic, face)
+    def recognize(self, pic, face=None, threshold=0.52, padding=15):
+        image = self.cut_out(pic, face, padding)
         encoding = self.img_to_encoding(image)
 
         min_dist = float('inf')
