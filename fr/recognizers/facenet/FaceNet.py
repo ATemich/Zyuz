@@ -19,9 +19,10 @@ class FaceNet(FaceRecognizer):
 
     def load_from_images(self, path):
         for file in os.listdir(path):
-            file = os.path.join(path, file)
-            identity = os.path.splitext(os.path.basename(file))[0]
-            self.database[identity] = self.img_path_to_encoding(file)
+            if file[0] != '.':
+                file = os.path.join(path, file)
+                identity = os.path.splitext(os.path.basename(file))[0]
+                self.database[identity] = self.img_path_to_encoding(file)
 
     def recognize(self, pic, face=None, threshold=0.52, confidence=False):
         image = self.cut_out(pic, face)
