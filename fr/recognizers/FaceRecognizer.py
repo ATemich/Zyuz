@@ -15,9 +15,8 @@ class FaceRecognizer:
         raise NotImplementedError
 
     @staticmethod
-    def cut_out(pic: numpy.ndarray, face: Face = None, padding: int = 0) -> numpy.ndarray:
+    def cut_out(pic: numpy.ndarray, face: Face = None) -> numpy.ndarray:
         if face is None:
             return pic
         else:
-            return pic[max(face.start.y-padding, 0):face.end.y+padding,
-                       max(face.start.x-padding, 0):face.end.x+padding]
+            return pic[face.start.y:face.end.y, face.start.x:face.end.x]
