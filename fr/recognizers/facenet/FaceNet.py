@@ -8,8 +8,9 @@ from keras import backend as K
 K.set_image_data_format('channels_first')
 
 class FaceNet(FaceRecognizer):
-    def __init__(self):
+    def __init__(self, threshold=0.53):
         super().__init__()
+        self.threshold = threshold
         self.database = {}
         self.model = faceRecoModel(input_shape=(3, 96, 96))
         self.model.compile(optimizer='adam', loss=self.triplet_loss, metrics=['accuracy'])
@@ -21,28 +22,36 @@ class FaceNet(FaceRecognizer):
         for file in os.listdir(path):
             if file[0] != '.':
                 file = os.path.join(path, file)
-                identity = os.path.splitext(os.path.basename(file))[0]
-                self.database[identity] = self.img_path_to_encoding(file)
+                id = os.path.splitext(os.path.basename(file))[0].split()[0]
+                self.database[id] = self.database.get(id, [])+[self.img_path_to_encoding(file)]
 
-    def recognize(self, pic, face=None, threshold=0.52, confidence=False):
-        image = self.cut_out(pic, face)
+    def recognize(self, frame, face=None):
+        if face is None:
+            image = frame
+        else:
+            image = face.get_image(frame)
         encoding = self.img_to_encoding(image)
 
         min_dist = float('inf')
         identity = None
 
-        for name, db_enc in self.database.items():
-            dist = np.linalg.norm(db_enc - encoding)
-            if dist < min_dist:
-                min_dist = dist
-                identity = name
+        for name, db_encs in self.database.items():
+            for db_enc in db_encs:
+                dist = np.linalg.norm(db_enc - encoding)
+                if dist < min_dist:
+                    min_dist = dist
+                    identity = name
 
-        if confidence:
-            return(str(identity), 1-min_dist)
-        if min_dist > threshold:
-            return None
+        if min_dist > self.threshold:
+            id = None
         else:
-            return str(identity)
+            id = identity
+
+        if face is not None:
+            face.id = id
+            return min_dist
+        else:
+            return id
 
     def img_path_to_encoding(self, image_path):
         img = cv2.imread(image_path, 1)

@@ -10,8 +10,8 @@ class HaarFaceFinder(FaceFinder):
         self.cascade = cv2.CascadeClassifier(path)
         self.find_kwargs = kwargs
 
-    def find(self, pic: numpy.ndarray, padding=15, *args, **kwargs):
-        gray = cv2.cvtColor(pic, cv2.COLOR_BGR2GRAY)
+    def find(self, frame: numpy.ndarray, padding=15, *args, **kwargs):
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         matches = []
         kw = self.find_kwargs.copy()
         kw.update(kwargs)

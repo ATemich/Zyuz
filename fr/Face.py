@@ -1,3 +1,4 @@
+import threading
 from typing import Union
 from collections import namedtuple
 from dlib import correlation_tracker
@@ -17,6 +18,7 @@ class Face:
             self.size = Vector(*self.size)
         self.dist = dist
         self.tracker = tracker
+        self.recognizing_thread = None
 
     @property
     def end(self):
@@ -27,6 +29,9 @@ class Face:
         x = other.start.x + other.size.x/2
         y = other.start.y + other.size.y/2
         return self.start.x <= x <= self.end.x and self.start.y <= y <= self.end.y
+
+    def get_image(self, frame):
+        return frame[self.start.y:self.end.y, self.start.x:self.end.x]
 
     def update_tracker(self, frame, threshold=7):
         if self.tracker is None:
@@ -39,3 +44,10 @@ class Face:
             self.start = Vector(int(pos.left()), int(pos.top()))
             self.size = Vector(int(pos.width()), int(pos.height()))
             return self.tracker
+
+    def get_recognized(self, frame, recognizer, in_background=True):
+        if in_background and (self.recognizing_thread is None or not self.recognizing_thread.isAlive()):
+            self.recognizing_thread = threading.Thread(target=recognizer.recognize, args=(frame, self))
+            self.recognizing_thread.start()
+        elif not in_background:
+            recognizer.recognize(frame, self)
