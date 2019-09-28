@@ -31,7 +31,7 @@ class Face:
         return self.start.x <= x <= self.end.x and self.start.y <= y <= self.end.y
 
     def get_image(self, frame):
-        return frame[self.start.y:self.end.y, self.start.x:self.end.x]
+        return frame[max(self.start.y, 0):self.end.y, max(self.start.x, 0):self.end.x]
 
     def update_tracker(self, frame, threshold=7):
         if self.tracker is None:
