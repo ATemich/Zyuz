@@ -20,9 +20,20 @@ class Face:
         self.tracker = tracker
         self.recognizing_thread = None
 
+    def padded(self, padding=1):
+        pad_x = int(self.size.x * (padding-1)/2)
+        pad_y = int(self.size.y * (padding-1)/2)
+        start = Vector(max(self.start.x-pad_x, 0), max(self.start.y-pad_y, 0))
+        size = Vector(int(self.size.x*padding), int(self.size.y*padding))
+        return Face(self.id, start, size, self.dist, self.tracker)
+
     @property
     def end(self):
         return Vector(self.start.x+self.size.x, self.start.y+self.size.y)
+
+    @end.setter
+    def end(self, end):
+        self.size = Vector(end.x-self.start.x, end.y-self.start.y)
 
     def __contains__(self, other):
         '''True if other's center is in self rectangle'''
@@ -31,7 +42,8 @@ class Face:
         return self.start.x <= x <= self.end.x and self.start.y <= y <= self.end.y
 
     def get_image(self, frame):
-        return frame[max(self.start.y, 0):self.end.y, max(self.start.x, 0):self.end.x]
+        image = frame[self.start.y:self.end.y, self.start.x:self.end.x]
+        return image
 
     def update_tracker(self, frame, threshold=7):
         if self.tracker is None:
@@ -41,7 +53,7 @@ class Face:
             return
         else:
             pos = self.tracker.get_position()
-            self.start = Vector(int(pos.left()), int(pos.top()))
+            self.start = Vector(max(int(pos.left()), 0), max(int(pos.top()), 0))
             self.size = Vector(int(pos.width()), int(pos.height()))
             return self.tracker
 
