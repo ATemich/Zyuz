@@ -25,11 +25,7 @@ class FaceNet(FaceRecognizer):
                 id = os.path.splitext(os.path.basename(file))[0].split()[0]
                 self.database[id] = self.database.get(id, [])+[self.img_path_to_encoding(file)]
 
-    def recognize(self, frame, face=None):
-        if face is None:
-            image = frame
-        else:
-            image = face.get_image(frame)
+    def recognize_image(self, image):
         encoding = self.img_to_encoding(image)
 
         min_dist = float('inf')
@@ -47,11 +43,7 @@ class FaceNet(FaceRecognizer):
         else:
             id = identity
 
-        if face is not None:
-            face.id = id
-            return min_dist
-        else:
-            return id
+        return id, min_dist
 
     def img_path_to_encoding(self, image_path):
         img = cv2.imread(image_path, 1)
