@@ -16,7 +16,9 @@ class Face:
         self.size = size
         if type(self.size) is tuple:
             self.size = Vector(*self.size)
-        self.dist = dist
+        self.last_dists = []
+        if dist is not None:
+            self.last_dists.append(dist)
         self.tracker = tracker
         self.recognizing_thread = None
 
@@ -26,6 +28,16 @@ class Face:
         start = Vector(max(self.start.x-pad_x, 0), max(self.start.y-pad_y, 0))
         size = Vector(int(self.size.x*padding), int(self.size.y*padding))
         return Face(self.id, start, size, self.dist, self.tracker)
+
+    @property
+    def dist(self):
+        if not self.last_dists:
+            return None
+        return sum(self.last_dists)/len(self.last_dists)
+
+    @dist.setter
+    def dist(self, dist):
+        self.last_dists = self.last_dists[-10:] + [dist]
 
     @property
     def end(self):
