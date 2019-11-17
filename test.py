@@ -2,6 +2,7 @@ from fr.finders import HaarFaceFinder
 from fr.finders.HaarFaceFinder.cascades import frontalface
 from fr.recognizers import FaceNet
 from fr.distance_estimators import dlibEstimator
+from color import Color
 import cv2
 import dlib
 import time
@@ -12,7 +13,7 @@ vc = cv2.VideoCapture('video4.mp4')
 
 MULTIPLIER = 1
 finder = HaarFaceFinder(frontalface, scaleFactor=1.3, minNeighbors=5, maxSize=(120, 120))
-recognizer = FaceNet(threshold=1)
+recognizer = FaceNet(threshold=0.6)
 recognizer.load_from_images('images')
 estimator = dlibEstimator()
 frame_counter = 0
@@ -48,12 +49,19 @@ while vc.isOpened():
         est_pad = 0.5
         dist, eyes = estimator.estimate(frame, face.padded(est_pad))
         face.dist = dist
-        color = (0, 0, 255) if face.dist and face.dist >= 20.5 else (255, 0, 0)
+        if face.id:
+            if face.dist >= 20.5:
+                color = Color.GREEN
+            else:
+                color = Color.BLUE
+        else:
+            color = Color.SKY
+        color = color.value
         img = cv2.rectangle(img, face.start, face.end, color, 2)
         for eye in eyes:
-            cv2.circle(img, (int(eye.x), int(eye.y)), 2, (255, 255, 255), -1)
+            cv2.circle(img, (int(eye.x), int(eye.y)), 2, color, -1)
         if face.id is None and face.attempts <= 10:
-            cv2.putText(img, f'Recognizing... - {round(face.dist,1)}', tuple(face.start), cv2.FONT_HERSHEY_DUPLEX, 1, 255)
+            cv2.putText(img, f'Recognizing... - {round(face.dist,1)}', tuple(face.start), cv2.FONT_HERSHEY_DUPLEX, 1, color)
             face.get_recognized(frame, recognizer)
         else:
             text = f'{face.id if face.id else "Unknown"}-{round(face.dist, 1)}'
