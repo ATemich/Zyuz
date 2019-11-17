@@ -9,7 +9,8 @@ class DistanceEstimator:
     def estimate(self, frame: numpy.ndarray, face: Face):
         eyes = self.find_eyes(frame, face)
         distance = self.find_distance_between_points(*eyes)
-        return self.estimate_distance(distance)
+        dist = self.estimate_distance(distance)
+        return dist, eyes
 
     def find_eyes(self, frame: numpy.ndarray, face: Face):
         raise NotImplementedError

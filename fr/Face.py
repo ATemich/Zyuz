@@ -21,6 +21,7 @@ class Face:
             self.last_dists.append(dist)
         self.tracker = tracker
         self.recognizing_thread = None
+        self.attempts = 0
 
     def padded(self, padding=1):
         pad_x = int(self.size.x * (padding-1)/2)
@@ -71,6 +72,7 @@ class Face:
 
     def get_recognized(self, frame, recognizer, in_background=True):
         if in_background and (self.recognizing_thread is None or not self.recognizing_thread.isAlive()):
+            self.attempts += 1
             self.recognizing_thread = threading.Thread(target=recognizer.recognize, args=(frame, self))
             self.recognizing_thread.start()
         elif not in_background:
