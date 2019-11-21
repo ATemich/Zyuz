@@ -129,3 +129,6 @@ test/
 facenet-master/
 images/
 video?.mp4
+ckpt/
+*.pkl
+*.db

@@ -26,25 +26,27 @@ class FaceNet(FaceRecognizer):
                 self.database[id] = self.database.get(id, [])+[self.img_path_to_encoding(file)]
 
     def recognize_image(self, image):
-        encoding = self.img_to_encoding(image)
-
+        encoding = self.img_to_encoding(image)#FIXME
+        '''
         min_dist = float('inf')
         identity = None
-
+        '''
+        min_dist = {}
         for name, db_encs in self.database.items():
             for db_enc in db_encs:
                 dist = np.linalg.norm(db_enc - encoding)
-                if dist < min_dist:
-                    min_dist = dist
-                    identity = name
-
+                if dist < min_dist.get(name, float('inf')):
+                    min_dist[name] = dist
+                    #identity = name
+        '''
         if min_dist > self.threshold:
             id = None
         else:
             id = identity
 
         return id, min_dist
-
+        '''
+        return min_dist
     def img_path_to_encoding(self, image_path):
         img = cv2.imread(image_path, 1)
         return self.img_to_encoding(img)
